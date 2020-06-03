@@ -1,0 +1,17 @@
+{
+  "name": "coef-simulator",
+  "displayName": "coef-simulator",
+  "expo": {
+    "name": "coef-simulator",
+    "slug": "expo-template-bare",
+    "version": "1.0.0",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "assetBundlePatterns": [
+      "**/*"
+    ]
+  }
+}
