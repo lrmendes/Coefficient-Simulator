@@ -10,6 +10,11 @@
       "android",
       "web"
     ],
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#00ff56"
+    },
     "assetBundlePatterns": [
       "**/*"
     ]

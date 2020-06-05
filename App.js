@@ -1,21 +1,18 @@
 import 'react-native-gesture-handler';
 import * as React from 'react';
-import SplashScreen from 'react-native-splash-screen'
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
 import Main from './src/screens/main/Main';
+import Steps from './src/screens/firstSteps/Steps';
 
 export default function App() {
   const Stack = createStackNavigator();
 
-  React.useEffect(() => {
-    SplashScreen.hide();
-  },[]);
-
   return (
     <NavigationContainer>
-      <Stack.Navigator>
-        <Stack.Screen name="Main" component={Main} />
+      <Stack.Navigator screenOptions={{headerShown: false}}>
+      <Stack.Screen name="Steps" component={Steps} />
+      <Stack.Screen name="Main" component={Main} />
       </Stack.Navigator>
     </NavigationContainer>
   );
