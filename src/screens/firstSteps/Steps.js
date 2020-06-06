@@ -15,6 +15,7 @@ export default class App extends React.Component {
           activeIndex:0,
           crNum: 0,
           chNum: 0,
+          coef: 0,
           carouselItems: [
             {
               body: <ScrollView persistentScrollbar={true}style={styles.scrollView}>
@@ -28,7 +29,7 @@ export default class App extends React.Component {
                       <TouchableOpacity style={styles.btNext} onPress={() => this.nextStep()}>
                         <Text style={styles.btNextText}>Próximo</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity style={styles.btJump} onPress={() => this.finishSteps()}>
+                      <TouchableOpacity style={styles.btJump} onPress={() => this.finishSteps(true)}>
                         <Text style={styles.btJumpText}>Pular Tutorial</Text>
                       </TouchableOpacity>
                       </View>
@@ -49,7 +50,9 @@ export default class App extends React.Component {
             {
               body: <ScrollView persistentScrollbar={true}style={styles.scrollView}>
                       <Text style={styles.title1}>Passo 2</Text>
-                      <Text style={styles.text1}>Dentro dessa aba clique sobre o número de seu coeficiente e será aberta uma página contendo os dois valores necessários.</Text>
+                      <Text style={styles.text1}>Dentro da aba Histórico Completo, clique sobre o número de seu coeficiente absoluto.</Text>
+                      <Text style={styles.text1}>Será aberta uma página contendo os dois valores necessários para o APP.</Text>
+                      <Image style={styles.stretchSquare} source={require('../../assets/firstSteps/step2.png')}  />
                       </ScrollView>,
               footer: <View>
                       <TouchableOpacity style={styles.btNext} onPress={() => this.nextStep()}>
@@ -60,65 +63,48 @@ export default class App extends React.Component {
             {
               body: <ScrollView persistentScrollbar={true}style={styles.scrollView}>
                       <Text style={styles.title1}>Passo 3</Text>
-                      <Text style={styles.text1}>Identifique os dois valores correspondentes ao seu CF e CH.</Text>
+                      <Text style={styles.text1}>Na página aberta haverá um quadro ao topo detalhando seu coeficiente.</Text>
+                      <Text style={styles.text1}>Identifique nesse quadro os dois valores correspondentes ao seu CF: (NF*CH) e CH.</Text>
+                      <Image style={styles.stretchSquare} source={require('../../assets/firstSteps/step3-1.png')}  />
                       </ScrollView>,
               footer: <View>
                       <TouchableOpacity style={styles.btNext} onPress={() => this.nextStep()}>
-                        <Text style={styles.btNextText}>Pronto</Text>
+                        <Text style={styles.btNextText}>Próximo</Text>
                       </TouchableOpacity>
                       </View>
             },
             {
               body: <ScrollView persistentScrollbar={true}style={styles.scrollView}>
                       <Text style={styles.title1}>Passo 4</Text>
-                      <Text style={styles.text1}>Insira os valores exatos encontrados no passo anterior.</Text>
+                      <Text style={styles.text1}>Insira nos campos indicados os valores exatos encontrados no passo anterior.</Text>
                       <Text style={styles.inputText}>Coeficiente de Rendimento (NF * CH)</Text>
-                      <TextInput style={styles.input} onChangeText={e => this.setState({crNum : e})} keyboardType={"numeric"} placeholder={" CR"} value={this.crNum} />
+                      <TextInput style={styles.input} onChangeText={e => (this.setState({crNum : e}), this.setCoef(e,0))} keyboardType={"numeric"} placeholder={" NF*CH"} value={this.crNum} />
                       <Text style={styles.inputText}>Carga Horária Total (CH)</Text>
-                      <TextInput style={styles.input} onChangeText={e => this.setState({chNum : e})} keyboardType={"numeric"} placeholder={" CH"} value={this.chNum} />
+                      <TextInput style={styles.input} onChangeText={e => (this.setState({chNum : e}), this.setCoef(0,e))} keyboardType={"numeric"} placeholder={" CH"} value={this.chNum} />
                       </ScrollView>,
               footer: <View>
-                      <TouchableOpacity style={styles.btNext} onPress={() => this.nextStep()}>
-                        <Text style={styles.btNextText}>Pronto</Text>
+                      <TouchableOpacity style={styles.btNext} onPress={() => this.finishSteps(false)}>
+                        <Text style={styles.btNextText}>Tudo Pronto</Text>
                       </TouchableOpacity>
                       </View>
             },
-            
-          /*{
-            title: "Primeiros Passos",
-            btText: "Próximo",
-            text1: "O Coefficient Simulator é um APP para simular coeficientes futuros baseado em notas estipuladas para cada matéria atual.",
-            text2: `Caso esteja no primeiro semestre e não possua coeficiente de rendimento poderá avançar o tutorial.`,
-            text3: `Caso já possua um coeficiente de rendimento é necessário adicionar dois números encontrados em seu perfil no portal do aluno.`,
-            text4: <Text style={styles.text1}>Siga o passo a passo inicial para obter os valores de <Text style={{fontWeight: 'bold'}}>carga horária total cursada</Text> e <Text style={{fontWeight: 'bold'}}>coeficiente de rendimento</Text>.</Text>,
-          },
-          {
-              title:"Item 2",
-              text: "Text 2",
-              btText: "Próximo"
-          },
-          {
-              title:"Item 3",
-              text: "Text 3",
-              btText: "Próximo"
-          },
-          {
-              title:"Item 4",
-              text: "Text 4",
-              btText: "Próximo"
-          },
-          {
-              title:"Item 5",
-              text: "Text 5",
-              btText: "Pronto"
-          },*/
         ],
       },
       this._renderItem = this._renderItem.bind(this);
-      //this.carousel = this.carousel.bind(this);
+    }
+
+    setCoef = (cr,cd) => {
+      try {
+        let calc = (cr || this.state.crNum) / ( (cd || this.state.chNum) * 10)
+        let power = Math.pow(10, 4 || 0)
+        calc = (Math.round(calc * power) / power);
+        this.setState({coef: calc})
+      } catch(e) {
+        
+      }
     }
     
-    finishSteps = () => {
+    finishSteps = (jumped) => {
       this.props.navigation.dispatch(
         CommonActions.reset({
           index: 0,
@@ -129,7 +115,7 @@ export default class App extends React.Component {
 
     nextStep = () => {
       if (this.state.activeIndex === this.state.carouselItems.length -1) {
-        this.finishSteps()
+        this.finishSteps(false)
       } else {
         this.setState({activeIndex: this.state.activeIndex + 1})
         this.carousel.snapToNext();
@@ -140,6 +126,12 @@ export default class App extends React.Component {
         return (
           <View style={styles.container}>
               {item.body}
+              {index == 4  
+              ? <View>
+                <Text style={styles.text1}>Verifique se o coeficiente base calculado abaixo é igual ao seu coeficiente atual.</Text>
+                <Text style={styles.math}>CR = <Text style={styles.text1B}>{this.state.crNum != 0 ? this.state.crNum : "NF * CH"}</Text> / ( 10 x <Text style={styles.text1B}>{this.state.chNum  || "CH"}</Text> ) = <Text style={styles.text1B}>{this.state.coef || "Coeficiente"}</Text></Text> 
+                </View>
+              : null}
               <View>
                 {item.footer}
               </View>
@@ -220,11 +212,6 @@ const styles = StyleSheet.create({
   btJumpText: {
     color: '#5DB075',
   },
-  welcome: {
-      fontSize: 20,
-      textAlign: 'center',
-      margin: 10,
-  },
   title1: {
     fontSize: 30,
     color: '#000000',
@@ -243,7 +230,13 @@ const styles = StyleSheet.create({
   stretch: {
     marginTop: 5,
     maxWidth: '98%',
-    borderRadius: 3,
+    borderRadius: 5,
+    resizeMode: 'stretch',
+  },
+  stretchSquare: {
+    marginTop: 5,
+    maxWidth: '98%',
+    resizeMode: 'stretch',
   },
   inputText: {
     marginTop: 15,
@@ -254,5 +247,11 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     borderColor: 'gray',
     borderWidth: 1,
+  },
+  math: {
+    marginTop: 15,
+    color: "#000000",
+    textAlign: 'center',
+    marginBottom: 15,
   }
 });
