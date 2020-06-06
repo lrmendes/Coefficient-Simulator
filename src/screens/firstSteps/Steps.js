@@ -1,6 +1,6 @@
 import React from 'react';
 import { Dimensions } from 'react-native';
-import { Text, View, SafeAreaView, StyleSheet, TouchableOpacity } from 'react-native';
+import { Text, View, SafeAreaView, StyleSheet, TouchableOpacity, ScrollView, Image, TextInput } from 'react-native';
 import { CommonActions } from '@react-navigation/native';
 
 import Carousel, {Pagination} from 'react-native-snap-carousel';
@@ -13,11 +13,81 @@ export default class App extends React.Component {
         super(props);
         this.state = { 
           activeIndex:0,
+          crNum: 0,
+          chNum: 0,
           carouselItems: [
-          {
+            {
+              body: <ScrollView persistentScrollbar={true}style={styles.scrollView}>
+                      <Text style={styles.title1}>Primeiros Passos</Text>
+                      <Text style={styles.text1}>O Coefficient Simulator é um APP para simular coeficientes futuros baseado em notas estipuladas para cada matéria atual.</Text>
+                      <Text style={styles.text1}>Caso esteja no primeiro semestre e não possua coeficiente de rendimento poderá avançar o tutorial.</Text>
+                      <Text style={styles.text1}>Caso já possua um coeficiente de rendimento é necessário adicionar dois números encontrados em seu perfil no portal do aluno.</Text>
+                      <Text style={styles.text1}>Siga o passo a passo inicial para obter os valores de <Text style={styles.text1B}>carga horária total cursada</Text> e <Text style={styles.text1B}>coeficiente de rendimento</Text>.</Text>
+                    </ScrollView>,
+              footer: <View>
+                      <TouchableOpacity style={styles.btNext} onPress={() => this.nextStep()}>
+                        <Text style={styles.btNextText}>Próximo</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.btJump} onPress={() => this.finishSteps()}>
+                        <Text style={styles.btJumpText}>Pular Tutorial</Text>
+                      </TouchableOpacity>
+                      </View>
+            },
+            {
+              body: <ScrollView persistentScrollbar={true} style={styles.scrollView}>
+                      <Text style={styles.title1}>Passo 1</Text>
+                      <Text style={styles.text1}>Acesse o <Text style={styles.text1B}>Portal do Aluno</Text> pelo celular ou computador.</Text>
+                      <Text style={styles.text1}>Acesse a aba <Text style={styles.text1B}>Histórico Completo</Text>.</Text>
+                      <Image style={styles.stretch} source={require('../../assets/firstSteps/step1.png')}  />
+                      </ScrollView>,
+              footer: <View>
+                      <TouchableOpacity style={styles.btNext} onPress={() => this.nextStep()}>
+                        <Text style={styles.btNextText}>Próximo</Text>
+                      </TouchableOpacity>
+                      </View>
+            },
+            {
+              body: <ScrollView persistentScrollbar={true}style={styles.scrollView}>
+                      <Text style={styles.title1}>Passo 2</Text>
+                      <Text style={styles.text1}>Dentro dessa aba clique sobre o número de seu coeficiente e será aberta uma página contendo os dois valores necessários.</Text>
+                      </ScrollView>,
+              footer: <View>
+                      <TouchableOpacity style={styles.btNext} onPress={() => this.nextStep()}>
+                        <Text style={styles.btNextText}>Próximo</Text>
+                      </TouchableOpacity>
+                      </View>
+            },
+            {
+              body: <ScrollView persistentScrollbar={true}style={styles.scrollView}>
+                      <Text style={styles.title1}>Passo 3</Text>
+                      <Text style={styles.text1}>Identifique os dois valores correspondentes ao seu CF e CH.</Text>
+                      </ScrollView>,
+              footer: <View>
+                      <TouchableOpacity style={styles.btNext} onPress={() => this.nextStep()}>
+                        <Text style={styles.btNextText}>Pronto</Text>
+                      </TouchableOpacity>
+                      </View>
+            },
+            {
+              body: <ScrollView persistentScrollbar={true}style={styles.scrollView}>
+                      <Text style={styles.title1}>Passo 4</Text>
+                      <Text style={styles.text1}>Insira os valores exatos encontrados no passo anterior.</Text>
+                      <Text style={styles.inputText}>Coeficiente de Rendimento (NF * CH)</Text>
+                      <TextInput style={styles.input} onChangeText={e => this.setState({crNum : e})} keyboardType={"numeric"} placeholder={" CR"} value={this.crNum} />
+                      <Text style={styles.inputText}>Carga Horária Total (CH)</Text>
+                      <TextInput style={styles.input} onChangeText={e => this.setState({chNum : e})} keyboardType={"numeric"} placeholder={" CH"} value={this.chNum} />
+                      </ScrollView>,
+              footer: <View>
+                      <TouchableOpacity style={styles.btNext} onPress={() => this.nextStep()}>
+                        <Text style={styles.btNextText}>Pronto</Text>
+                      </TouchableOpacity>
+                      </View>
+            },
+            
+          /*{
             title: "Primeiros Passos",
             btText: "Próximo",
-            text1: "O Coefficient Simulator é um APP para simular coeficientes futuros baseado em notas estipuladas para cada matéria atual",
+            text1: "O Coefficient Simulator é um APP para simular coeficientes futuros baseado em notas estipuladas para cada matéria atual.",
             text2: `Caso esteja no primeiro semestre e não possua coeficiente de rendimento poderá avançar o tutorial.`,
             text3: `Caso já possua um coeficiente de rendimento é necessário adicionar dois números encontrados em seu perfil no portal do aluno.`,
             text4: <Text style={styles.text1}>Siga o passo a passo inicial para obter os valores de <Text style={{fontWeight: 'bold'}}>carga horária total cursada</Text> e <Text style={{fontWeight: 'bold'}}>coeficiente de rendimento</Text>.</Text>,
@@ -41,23 +111,25 @@ export default class App extends React.Component {
               title:"Item 5",
               text: "Text 5",
               btText: "Pronto"
-          },
+          },*/
         ],
       },
       this._renderItem = this._renderItem.bind(this);
       //this.carousel = this.carousel.bind(this);
     }
     
-    
+    finishSteps = () => {
+      this.props.navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [
+            { name: 'Main' },
+        ],}))
+    }
 
     nextStep = () => {
       if (this.state.activeIndex === this.state.carouselItems.length -1) {
-        this.props.navigation.dispatch(
-          CommonActions.reset({
-            index: 0,
-            routes: [
-              { name: 'Main' },
-          ],}))
+        this.finishSteps()
       } else {
         this.setState({activeIndex: this.state.activeIndex + 1})
         this.carousel.snapToNext();
@@ -67,17 +139,9 @@ export default class App extends React.Component {
     _renderItem({item,index}) {
         return (
           <View style={styles.container}>
+              {item.body}
               <View>
-                <Text style={styles.title1}>{item.title}</Text>
-                <Text style={styles.text1}>{item.text1}</Text>
-                <Text style={styles.text1}>{item.text2}</Text>
-                <Text style={styles.text1}>{item.text3}</Text>
-                {item.text4}
-              </View>
-              <View>
-                <TouchableOpacity style={styles.btNext} onPress={() => this.nextStep()}>
-                  <Text style={styles.btNextText}>{item.btText}</Text>
-                </TouchableOpacity>
+                {item.footer}
               </View>
           </View>
 
@@ -128,14 +192,17 @@ export default class App extends React.Component {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor:'floralwhite',
-    borderRadius: 3,
+    backgroundColor:'#ffffff',
+    borderRadius: 10,
     height: viewportHeight,
     padding: 20,
     marginLeft: 15,
     flex: 1,
     justifyContent: 'space-between',
     marginRight: 15,
+  },
+  scrollView: {
+    marginBottom: 10,
   },
   btNext: {
     padding: 15,
@@ -145,6 +212,13 @@ const styles = StyleSheet.create({
   },
   btNextText: {
     color: '#ffffff',
+  },
+  btJump: {
+    marginTop: 15,
+    alignItems: 'center',
+  },
+  btJumpText: {
+    color: '#5DB075',
   },
   welcome: {
       fontSize: 20,
@@ -158,6 +232,27 @@ const styles = StyleSheet.create({
   },
   text1: {
     marginTop: 10,
+    marginRight: 5,
     textAlign: 'justify',
+  },
+  text1B: {
+    marginTop: 10,
+    textAlign: 'justify',
+    fontWeight: 'bold',
+  },
+  stretch: {
+    marginTop: 5,
+    maxWidth: '98%',
+    borderRadius: 3,
+  },
+  inputText: {
+    marginTop: 15,
+  },
+  input: {
+    marginTop: 2,
+    height: 40,
+    borderRadius: 5,
+    borderColor: 'gray',
+    borderWidth: 1,
   }
 });
