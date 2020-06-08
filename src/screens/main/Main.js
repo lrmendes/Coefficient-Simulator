@@ -2,7 +2,7 @@ import * as React from 'react';
 import {useState} from 'react';
 import { View,Text, StyleSheet,ImageBackground,TouchableOpacity, KeyboardAvoidingView, FlatList, 
   SafeAreaView, Modal, StatusBar, TextInput, BackHandler  } from 'react-native';
-import { AsyncStorage } from 'react-native';
+import AsyncStorage from '@react-native-community/async-storage';
 import { useEffect } from 'react';
 import bgFile from '../../assets/background2.png';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -10,8 +10,9 @@ import Icon2 from 'react-native-vector-icons/Fontisto';
 import Icon3 from 'react-native-vector-icons/SimpleLineIcons';
 import { Divider } from 'react-native-elements';
 import HideWithKeyboard from 'react-native-hide-with-keyboard';
+import { CommonActions } from '@react-navigation/native';
 
-export default function HomeScreen(props) {
+export default function Main(props) {
   const [runOnce,setRunOnce] = useState(true);
 
   const [modalAboutVisible, setModalAboutVisible] = useState(false);
@@ -22,26 +23,36 @@ export default function HomeScreen(props) {
 
   _retrieveData = async () => {
     try {
-      const value = await AsyncStorage.getItem('DidFirstSteps');
-      if (value === null || value === false) {
-        props.navigation.dispatch(
+      const value = await AsyncStorage.getItem('@DidFirstSteps');
+
+      if (value === null || value !== "true") {
+        return props.navigation.dispatch(
           CommonActions.reset({
             index: 0,
             routes: [
-              { name: 'Main' },
+              { name: 'Steps' },
           ],}));
       }
     } catch (error) {
-      // Error retrieving data
+
     }
   };
 
   useEffect(() => {
-    /*if(runOnce) {
+    if(runOnce) {
       _retrieveData();
       setRunOnce(false);
-    }*/
+    }
   },[]);
+
+  function openFirstSteps() {
+    return props.navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [
+          { name: 'Steps' },
+      ],}));
+  }
 
   function doNothing(index) {
     return null
@@ -138,6 +149,9 @@ export default function HomeScreen(props) {
         <View style={styles.aboutContainer}>
           <View style={styles.aboutModalView}>
           <Text style={styles.textDiscName}>Configurações Básicas do APP.</Text>
+          <TouchableOpacity style={styles.boxTop} onPress={() => openFirstSteps()}>
+            <Text style={styles.textCoef}>Ver Tutorial</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.boxTop} onPress={() => setModalConfigVisible(false)}>
             <Text style={styles.textCoef}>Fechar</Text>
           </TouchableOpacity>
@@ -160,14 +174,16 @@ aboutContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.8)",
 },
 aboutModalView: {
-  backgroundColor: "white",
+  backgroundColor: 'rgba(255,255,255,0.9)',
   borderRadius: 20,
   padding: 20,
   alignItems: "center",
   shadowColor: "#000",
-  height: '98%',
+  height: '80%',
+
   width: '95%',
   shadowOffset: {
     width: 0,

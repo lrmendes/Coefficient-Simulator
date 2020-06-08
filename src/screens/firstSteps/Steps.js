@@ -1,12 +1,11 @@
 import React from 'react';
 import { Dimensions } from 'react-native';
-import { Text, View, SafeAreaView, StyleSheet, TouchableOpacity, ScrollView, Image, TextInput } from 'react-native';
+import { Text, View, SafeAreaView, StyleSheet, TouchableOpacity, ScrollView, Image, TextInput, StatusBar } from 'react-native';
 import { CommonActions } from '@react-navigation/native';
-
+import AsyncStorage from '@react-native-community/async-storage';
 import Carousel, {Pagination} from 'react-native-snap-carousel';
 
 const { width: viewportWidth, height: viewportHeight } = Dimensions.get('window');
-
 
 export default class App extends React.Component {
     constructor(props) {
@@ -104,13 +103,19 @@ export default class App extends React.Component {
       }
     }
     
-    finishSteps = (jumped) => {
-      this.props.navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [
-            { name: 'Main' },
-        ],}))
+    finishSteps = async (jumped) => {
+      try {
+        console.log("Feito",jumped);
+        await AsyncStorage.setItem('@DidFirstSteps', "true");
+        return this.props.navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [
+              { name: 'Main' },
+          ],}))
+      } catch (e) {
+        
+      }
     }
 
     nextStep = () => {
@@ -125,6 +130,7 @@ export default class App extends React.Component {
     _renderItem({item,index}) {
         return (
           <View style={styles.container}>
+          <StatusBar barStyle="light-content" backgroundColor="#054000" />
               {item.body}
               {index == 4  
               ? <View>
