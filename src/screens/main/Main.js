@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {useState} from 'react';
-import { View,Text, StyleSheet,ImageBackground,TouchableOpacity, FlatList, SafeAreaView, StatusBar  } from 'react-native';
+import { View,Text, StyleSheet,ImageBackground,TouchableOpacity, KeyboardAvoidingView, FlatList, 
+  SafeAreaView, Modal, StatusBar, TextInput, BackHandler  } from 'react-native';
 import { AsyncStorage } from 'react-native';
 import { useEffect } from 'react';
 import bgFile from '../../assets/background2.png';
@@ -8,11 +9,16 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import Icon2 from 'react-native-vector-icons/Fontisto';
 import Icon3 from 'react-native-vector-icons/SimpleLineIcons';
 import { Divider } from 'react-native-elements';
+import HideWithKeyboard from 'react-native-hide-with-keyboard';
 
 export default function HomeScreen(props) {
   const [runOnce,setRunOnce] = useState(true);
 
-  const DATA = [0,1,2,3,4,5,6,7,8,9,10];
+  const [modalAboutVisible, setModalAboutVisible] = useState(false);
+  const [modalConfigVisible, setModalConfigVisible] = useState(false);
+
+  const DATA = [0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10];
+    const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
   _retrieveData = async () => {
     try {
@@ -37,7 +43,7 @@ export default function HomeScreen(props) {
     }*/
   },[]);
 
-  function doNothing() {
+  function doNothing(index) {
     return null
   }
 
@@ -49,6 +55,7 @@ export default function HomeScreen(props) {
   
 
   return (
+    <SafeAreaView style={styles.screen}>
       <ImageBackground source={bgFile} style={styles.bgimage}>
         <StatusBar barStyle="light-content" backgroundColor="#002033" />
         <View style={styles.container}>
@@ -59,11 +66,12 @@ export default function HomeScreen(props) {
               <Text style={styles.textCoef}>83.2</Text>
             </View>
           </View>
-          <SafeAreaView style={styles.containerItemMid}>
+          <KeyboardAvoidingView style={styles.containerItemMid}>
             <Text style={styles.textDisc}>Disciplinas Cadastradas</Text>
             <Divider style={styles.div1} />
             <FlatList
               data={DATA}
+              removeClippedSubviews={false}
               style={styles.scrollView}
               showsVerticalScrollIndicator={true}
               renderItem={({ item }) => (
@@ -71,7 +79,7 @@ export default function HomeScreen(props) {
                   <View key={item} style={styles.listItem}>
                     <View>
                       <View style={styles.boxDiscCoef}>
-                        <Text style={styles.discCoef}>{10-item}.0</Text>
+                      <TextInput style={styles.discCoef} onChangeText={e => (null)} keyboardType={"numeric"} defaultValue={(10-item).toString()+".0"} />
                       </View>
                     </View>
                     <View style={styles.boxDiscMain}>
@@ -87,11 +95,11 @@ export default function HomeScreen(props) {
                   <Divider style={styles.div2} />
                 </View>
               )}
-              keyExtractor={item => item}
+              keyExtractor={item => item.toString()}
             />
-          </SafeAreaView >
-          <View style={styles.containerItemBottom}>
-            <TouchableOpacity style={styles.menuButton} onPress={() => doNothing()}>
+          </KeyboardAvoidingView>
+          <HideWithKeyboard style={styles.containerItemBottom}>
+            <TouchableOpacity style={styles.menuButton} onPress={() => setModalAboutVisible(true)}>
               <Icon2 name="info" style={styles.iconButton} size={30}/>
             </TouchableOpacity>
 
@@ -99,12 +107,44 @@ export default function HomeScreen(props) {
               <Icon name="add" style={styles.iconButton} size={45}/>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuButton} onPress={() => doNothing()}>
+            <TouchableOpacity style={styles.menuButton} onPress={() => setModalConfigVisible(true)}>
               <Icon name="settings" style={styles.iconButton} size={30}/>
             </TouchableOpacity>
-          </View>
+          </HideWithKeyboard>
         </View>
       </ImageBackground>
+      <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalAboutVisible}
+          onRequestClose={() => {setModalAboutVisible(false)}}
+          >
+        <View style={styles.aboutContainer}>
+          <View style={styles.aboutModalView}>
+          <Text style={styles.textDiscName}>Informações sobre criador e componentes.</Text>
+          <TouchableOpacity style={styles.boxTop} onPress={() => setModalAboutVisible(false)}>
+            <Text style={styles.textCoef}>Fechar</Text>
+          </TouchableOpacity>
+          </View>
+        </View>
+        </Modal>
+      
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalConfigVisible}
+          onRequestClose={() => {setModalConfigVisible(false)}}
+          >
+        <View style={styles.aboutContainer}>
+          <View style={styles.aboutModalView}>
+          <Text style={styles.textDiscName}>Configurações Básicas do APP.</Text>
+          <TouchableOpacity style={styles.boxTop} onPress={() => setModalConfigVisible(false)}>
+            <Text style={styles.textCoef}>Fechar</Text>
+          </TouchableOpacity>
+          </View>
+        </View>
+        </Modal>
+      </SafeAreaView>
     );
   }
 
@@ -115,6 +155,31 @@ container: {
     alignItems: 'center',
     width: '100%',
     height: '100%',
+},
+aboutContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+},
+aboutModalView: {
+  backgroundColor: "white",
+  borderRadius: 20,
+  padding: 20,
+  alignItems: "center",
+  shadowColor: "#000",
+  height: '98%',
+  width: '95%',
+  shadowOffset: {
+    width: 0,
+    height: 2
+  },
+  shadowOpacity: 0.25,
+  shadowRadius: 3.84,
+  elevation: 5
+},
+screen: {
+  width: '100%',
+  height: '100%',
 },
 containerItemTop: {
   width: '100%',
@@ -157,6 +222,7 @@ discCoef: {
   fontSize: 22,
   marginBottom: 2,
   color: '#FFFFFF',
+  textAlign: 'center'
 },
 actionList: {
   borderWidth: 1,
@@ -172,7 +238,7 @@ actionlistIcon: {
 },
 containerItemMid: {
   width: '95%',
-  backgroundColor: 'rgba(255, 255, 255, 0.6)',
+  backgroundColor: 'rgba(255, 255, 255, 0.5)',
   borderWidth: 1,
   flex: 1,
   flexBasis: 0,
@@ -183,10 +249,6 @@ containerItemMid: {
   marginTop: 10,
   marginBottom: 10,
   alignItems: 'center',
-  shadowColor: "#000",
-  shadowOpacity: 1,
-  shadowRadius: 13.16,
-  elevation: 1,
 },
 containerItemBottom: {
   flexDirection: 'row',
@@ -262,7 +324,7 @@ addButton: {
   width: 75,
   height: 75,
   borderWidth: 1,
-  borderColor: 'rgba(255, 255, 255, 0.1)',
+  borderColor: 'rgba(	0, 47, 75, 0.2)',
   backgroundColor: '#003758',
   alignItems: 'center',
   justifyContent: 'center',
