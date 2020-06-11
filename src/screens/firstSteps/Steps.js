@@ -105,7 +105,7 @@ export default class App extends React.Component {
     
     finishSteps = async (jumped) => {
       try {
-        console.log("Feito",jumped);
+        //console.log("Feito",jumped);
         await AsyncStorage.setItem('@DidFirstSteps', "true");
         return this.props.navigation.dispatch(
           CommonActions.reset({

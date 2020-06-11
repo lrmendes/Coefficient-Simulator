@@ -1,7 +1,7 @@
 import * as React from 'react';
 import {useState} from 'react';
 import { View,Text, StyleSheet,ImageBackground,TouchableOpacity, KeyboardAvoidingView, FlatList, 
-  SafeAreaView, Modal, StatusBar, TextInput, BackHandler  } from 'react-native';
+  SafeAreaView, Modal, StatusBar, TextInput  } from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
 import { useEffect } from 'react';
 import bgFile from '../../assets/background2.png';
@@ -11,15 +11,36 @@ import Icon3 from 'react-native-vector-icons/SimpleLineIcons';
 import { Divider } from 'react-native-elements';
 import HideWithKeyboard from 'react-native-hide-with-keyboard';
 import { CommonActions } from '@react-navigation/native';
+import {Picker} from '@react-native-community/picker';
 
 export default function Main(props) {
   const [runOnce,setRunOnce] = useState(true);
 
   const [modalAboutVisible, setModalAboutVisible] = useState(false);
   const [modalConfigVisible, setModalConfigVisible] = useState(false);
+  const [modalAddVisible, setModalAddVisible] = useState(false);
+  const [refresh,setRefresh] = useState(false);
 
-  const DATA = [0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10];
-    const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+  const [disc,setDisc] = useState({
+    id: null,
+    name: '',
+    ch: 60,
+    cf: 0.0,
+  });
+
+  var DATA = [
+    {id: 0, name: 'Disciplina 1', ch: 60, cf: 10.0},
+    {id: 1, name: 'Disc 2', ch: 90, cf: 8.5},
+    {id: 2, name: 'Disciplina 3', ch: 30, cf: 8.4}
+  ];
+
+  const inputChange = (field, value) => {
+    setDisc(state => ({
+       ...state,
+       [field]: value
+    }))
+ };
+
 
   _retrieveData = async () => {
     try {
@@ -54,15 +75,40 @@ export default function Main(props) {
       ],}));
   }
 
-  function doNothing(index) {
-    return null
+  function addDisc() {
+    inputChange("id",null);
+    inputChange("name","");
+    inputChange("ch",60);
+    inputChange("cf",0.0);
+
+    setModalAddVisible(true);
   }
 
-  /*function Item({ id, title, selected, onSelect }) {
-    return (
+  function editDisc(disc) {
+    inputChange("id",disc.id);
+    inputChange("name",disc.name);
+    inputChange("ch",disc.ch);
+    inputChange("cf",disc.cf);
 
-    );
-  }*/
+    setModalAddVisible(true);
+  }
+
+  function refreshListWithModification() {
+    // New
+    if (disc.id == null) {
+      let newId = DATA.length
+      let newDisc = disc;
+      newDisc.id = newId;
+      DATA.push(newDisc);
+      console.log("Foi NEW");
+    } else {
+      DATA[disc.id] = disc;
+      console.log("Foi EDIT");
+    }
+    console.log(DATA);
+    setRefresh(true);
+    setModalAddVisible(false);
+  }
   
 
   return (
@@ -82,23 +128,24 @@ export default function Main(props) {
             <Divider style={styles.div1} />
             <FlatList
               data={DATA}
+              extraData={refresh}
               removeClippedSubviews={false}
               style={styles.scrollView}
               showsVerticalScrollIndicator={true}
               renderItem={({ item }) => (
-                <View key={item} style={styles.listContainer}>
-                  <View key={item} style={styles.listItem}>
+                <View style={styles.listContainer}>
+                  <View style={styles.listItem}>
                     <View>
                       <View style={styles.boxDiscCoef}>
-                      <TextInput style={styles.discCoef} onChangeText={e => (null)} keyboardType={"numeric"} defaultValue={(10-item).toString()+".0"} />
+                      <TextInput style={styles.discCoef} onChangeText={e => (null)} keyboardType={"numeric"} defaultValue={item.cf.toString()} />
                       </View>
                     </View>
                     <View style={styles.boxDiscMain}>
-                      <Text style={styles.textDiscName}>Disciplina {item}</Text>
-                      <Text style={styles.textDiscCh}>Carga Horaria: {item*10}h</Text>
+                      <Text style={styles.textDiscName}>{item.name}</Text>
+                      <Text style={styles.textDiscCh}>Carga Horaria: {item.ch}h</Text>
                     </View>
                     <View>
-                      <TouchableOpacity style={styles.actionList} onPress={() => doNothing(id)}>
+                      <TouchableOpacity style={styles.actionList} onPress={() => editDisc(item)}>
                         <Icon3 name="options" style={styles.actionlistIcon} size={14}/>
                       </TouchableOpacity>
                     </View>
@@ -106,7 +153,7 @@ export default function Main(props) {
                   <Divider style={styles.div2} />
                 </View>
               )}
-              keyExtractor={item => item.toString()}
+              keyExtractor={item => item.id.toString()}
             />
           </KeyboardAvoidingView>
           <HideWithKeyboard style={styles.containerItemBottom}>
@@ -114,7 +161,7 @@ export default function Main(props) {
               <Icon2 name="info" style={styles.iconButton} size={30}/>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.addButton} onPress={() => doNothing()}>
+            <TouchableOpacity style={styles.addButton} onPress={() => addDisc()}>
               <Icon name="add" style={styles.iconButton} size={45}/>
             </TouchableOpacity>
 
@@ -149,12 +196,62 @@ export default function Main(props) {
         <View style={styles.aboutContainer}>
           <View style={styles.aboutModalView}>
           <Text style={styles.textDiscName}>Configurações Básicas do APP.</Text>
-          <TouchableOpacity style={styles.boxTop} onPress={() => openFirstSteps()}>
+          <View style={styles.dialogBtnView}>
+          <TouchableOpacity style={styles.dialogBtn} onPress={() => openFirstSteps()}>
             <Text style={styles.textCoef}>Ver Tutorial</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.boxTop} onPress={() => setModalConfigVisible(false)}>
+          <TouchableOpacity style={styles.dialogBtn} onPress={() => setModalConfigVisible(false)}>
             <Text style={styles.textCoef}>Fechar</Text>
           </TouchableOpacity>
+          </View>
+          </View>
+        </View>
+        </Modal>
+
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalAddVisible}
+          onRequestClose={() => {setModalAddVisible(false)}}
+          >
+        <View style={styles.aboutContainer}>
+          <View style={styles.addModalView}>
+          <Text style={styles.addModalTitle}>{ disc.id == null ? "Adicionar" : "Editar" } Disciplina</Text>
+          <Divider style={styles.divModal} />
+          <Text style={styles.inputText}>Nome:</Text>
+          <TextInput style={styles.input} onChangeText={e => (inputChange("name",e))} placeholder={" Nome ou Sigla da Displina "} value={disc.name} />
+          <Text style={styles.inputText}>Carga Horária Total:</Text>
+          <View style={styles.input}>
+          <Picker
+            selectedValue={disc.ch.toString()}
+            accessibilityLabel = {"pickerCH"}
+            style={styles.inputDrop}
+            onValueChange={(itemValue, itemIndex) => inputChange("ch",itemValue)}
+            mode={"dropdown"}
+          >
+            <Picker.Item label="30 Horas" value="30" />
+            <Picker.Item label="45 Horas" value="45" />
+            <Picker.Item label="60 Horas" value="60" />
+            <Picker.Item label="75 Horas" value="75" />
+            <Picker.Item label="90 Horas" value="90" />
+            <Picker.Item label="120 Horas" value="120" />
+            <Picker.Item label="180 Horas" value="180" />
+          
+          </Picker>
+          </View>
+          <Text style={styles.inputText}>Nota Estipulada:</Text>
+          <TextInput style={styles.input} onChangeText={e => (inputChange("cf",e))} keyboardType={"numeric"} placeholder={" Nota Estipulada "} value={disc.cf.toString()} />
+          <Text style={styles.inputObservation}>
+          Entradas Válidas: 0.00 a 10.0.
+          </Text>
+          <View style={styles.dialogBtnView}>
+            <TouchableOpacity style={styles.dialogAddBtnCancel} onPress={() => setModalAddVisible(false)}>
+              <Text style={styles.dialogAddBtnText}>Cancelar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.dialogAddBtnSaveEdit} onPress={() => refreshListWithModification()}>
+              <Text style={styles.dialogAddBtnText}>{ disc.id == null ? "Cadastrar" : "Modificar" }</Text>
+            </TouchableOpacity>
+          </View>
           </View>
         </View>
         </Modal>
@@ -169,6 +266,54 @@ container: {
     alignItems: 'center',
     width: '100%',
     height: '100%',
+},
+dialogAddBtnCancel: {
+  padding: 5,
+  borderWidth: 1,
+  backgroundColor: '#4c4c4c',
+  borderColor: 'rgba(0,0,0,0.1)',
+  borderRadius: 15,
+  alignItems: 'center',
+  width: '45%',
+},
+dialogAddBtnSaveEdit: {
+  padding: 5,
+  borderWidth: 1,
+  backgroundColor: '#004772',
+  borderColor: 'rgba(0,0,0,0.1)',
+  borderRadius: 15,
+  alignItems: 'center',
+  width: '45%',
+},
+dialogBtnView: {
+  marginTop: 20,
+  width: '95%',
+  justifyContent: 'space-between',
+  flexDirection: 'row',
+},
+inputText: {
+  marginTop: 15,
+},
+input: {
+  marginTop: 2,
+  height: 40,
+  width: '95%',
+  borderRadius: 5,
+  borderColor: 'gray',
+  borderWidth: 1,
+},
+inputDrop: {
+  height: '100%',
+  width: '100%',
+  borderColor: 'gray',
+  borderWidth: 1,
+},
+inputObservation: {
+  fontSize: 12,
+  textAlign: 'left',
+  width: '80%',
+  marginLeft: 5,
+  color: "#bd2843",
 },
 aboutContainer: {
     flex: 1,
@@ -185,6 +330,20 @@ aboutModalView: {
   height: '80%',
 
   width: '95%',
+  shadowOffset: {
+    width: 0,
+    height: 2
+  },
+  shadowOpacity: 0.25,
+  shadowRadius: 3.84,
+  elevation: 5
+},
+addModalView: {
+  backgroundColor: 'rgba(255,255,255,0.9)',
+  borderRadius: 20,
+  padding: 20,
+  shadowColor: "#000",
+  width: '80%',
   shadowOffset: {
     width: 0,
     height: 2
@@ -278,6 +437,12 @@ div1: {
   width: '100%',
   textAlign: 'center',
 },
+divModal: {
+  backgroundColor: 'rgba(0,0,0,0.2)',
+  width: '100%',
+  textAlign: 'center',
+  marginTop: 10,
+},
 div2: {
   backgroundColor: 'rgba(0,0,0,0.2)',
   width: '100%',
@@ -295,6 +460,12 @@ textDiscName: {
   color: '#004772',
   fontWeight: 'bold',
   //textAlign: 'center'
+},
+addModalTitle: {
+  fontSize: 20,
+  color: '#004772',
+  fontWeight: 'bold',
+  textAlign: 'center'
 },
 textDiscCh: {
   fontSize: 14,
@@ -329,6 +500,11 @@ textCoef: {
   color: '#ffffff',
   fontWeight: 'bold',
   fontSize: 25,
+},
+dialogAddBtnText: {
+  color: '#ffffff',
+  fontWeight: 'bold',
+  fontSize: 20,
 },
 textTop: {
   fontSize: 15, 
