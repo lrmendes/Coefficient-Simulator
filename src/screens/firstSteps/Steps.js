@@ -107,6 +107,9 @@ export default class App extends React.Component {
       try {
         //console.log("Feito",jumped);
         await AsyncStorage.setItem('@DidFirstSteps', "true");
+        await AsyncStorage.setItem('@baseNf', this.state.crNum.toString());
+        await AsyncStorage.setItem('@baseCh', this.state.chNum.toString());
+        await AsyncStorage.setItem('@baseCf', this.state.coef.toString());
         return this.props.navigation.dispatch(
           CommonActions.reset({
             index: 0,

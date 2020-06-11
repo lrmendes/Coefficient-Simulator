@@ -17,6 +17,13 @@ import { act } from 'react-test-renderer';
 export default function Main(props) {
   const [runOnce,setRunOnce] = useState(true);
 
+  const[baseCf,setBaseCf] = useState({
+    ch: 0.0,
+    nf: 0.0,
+  });
+
+  const[simulatedCf,setSimulatedCf] = useState(0);
+
   const [modalAboutVisible, setModalAboutVisible] = useState(false);
   const [modalConfigVisible, setModalConfigVisible] = useState(false);
   const [modalAddVisible, setModalAddVisible] = useState(false);
@@ -69,14 +76,33 @@ export default function Main(props) {
     }
   }
 
+  const _retrieveCoef = async () => {
+    try {
+      const ch = await AsyncStorage.getItem('@baseCh');
+      const nf = await AsyncStorage.getItem('@baseNf');
+      const cf = await AsyncStorage.getItem('@baseCf');
+
+      if (ch == null || nf == null || cf == null) {
+        return;
+      }
+      setBaseCf({ch: parseFloat(ch), nf: parseFloat(nf), cf: parseFloat(cf)});
+    } catch (e) {
+      
+    }
+  }
+
   useEffect(() => {
     if(runOnce) {
       _checkFirstSteps();
+      _retrieveCoef();
       _retrieveData();
       setRunOnce(false);
     }
+    updateCf();
     saveStorageChanges();
-  },[Data.toString()]);
+    //console.log("Clearou");
+    //await AsyncStorage.clear();
+  },[JSON.stringify(Data), baseCf]);
 
   function openFirstSteps() {
     return props.navigation.dispatch(
@@ -85,6 +111,31 @@ export default function Main(props) {
         routes: [
           { name: 'Steps' },
       ],}));
+  }
+
+  const updateCf = () => {
+    if (Data.length == 0) {
+      setSimulatedCf(baseCf.cf);
+    } else {
+      let sumNf = 0;
+      let sumCh = 0;
+
+      Data.map(item => {
+        sumNf += parseFloat(item.cf) * parseFloat(item.ch);
+        sumCh += parseFloat(item.ch);
+      });
+
+      console.log(sumNf, " - ",sumCh);
+
+      try {
+        let calc = (sumNf + baseCf.nf) / ( (sumCh + baseCf.ch) * 10)
+        let power = Math.pow(10, 4 || 0)
+        calc = (Math.round(calc * power) / power);
+        setSimulatedCf(calc);
+      } catch(e) {
+        
+      }
+    }
   }
 
   const createTwoButtonAlert = (title,msg,disc) =>
@@ -167,10 +218,10 @@ export default function Main(props) {
         <StatusBar barStyle="light-content" backgroundColor="#002033" />
         <View style={styles.container}>
           <View style={styles.containerItemTop}>
-            <Text style={styles.textTop}>Coeficiente Base: 80.4</Text>
+            <Text style={styles.textTop}>Coeficiente Base: {baseCf.cf}</Text>
             <View style={styles.boxTop}>
               <Text style={styles.textBoxTop}>Coeficiente Simulado</Text>
-              <Text style={styles.textCoef}>83.2</Text>
+              <Text style={styles.textCoef}>{simulatedCf}</Text>
             </View>
           </View>
           <KeyboardAvoidingView style={styles.containerItemMid}>
