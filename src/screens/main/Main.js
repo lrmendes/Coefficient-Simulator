@@ -1,7 +1,7 @@
 import * as React from 'react';
 import {useState} from 'react';
 import { View,Text, StyleSheet,ImageBackground,TouchableOpacity, KeyboardAvoidingView, FlatList, 
-  SafeAreaView, Modal, StatusBar, TextInput  } from 'react-native';
+  SafeAreaView, Modal, StatusBar, TextInput, Alert  } from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
 import { useEffect } from 'react';
 import bgFile from '../../assets/background2.png';
@@ -12,6 +12,7 @@ import { Divider } from 'react-native-elements';
 import HideWithKeyboard from 'react-native-hide-with-keyboard';
 import { CommonActions } from '@react-navigation/native';
 import {Picker} from '@react-native-community/picker';
+import { act } from 'react-test-renderer';
 
 export default function Main(props) {
   const [runOnce,setRunOnce] = useState(true);
@@ -21,18 +22,15 @@ export default function Main(props) {
   const [modalAddVisible, setModalAddVisible] = useState(false);
   const [refresh,setRefresh] = useState(false);
 
+  const [Data,setData] = useState([]);
+
+  const [isNew,setIsNew] = useState(true);
+
   const [disc,setDisc] = useState({
-    id: null,
     name: '',
     ch: 60,
     cf: 0.0,
   });
-
-  var DATA = [
-    {id: 0, name: 'Disciplina 1', ch: 60, cf: 10.0},
-    {id: 1, name: 'Disc 2', ch: 90, cf: 8.5},
-    {id: 2, name: 'Disciplina 3', ch: 30, cf: 8.4}
-  ];
 
   const inputChange = (field, value) => {
     setDisc(state => ({
@@ -42,7 +40,7 @@ export default function Main(props) {
  };
 
 
-  _retrieveData = async () => {
+  const _checkFirstSteps = async () => {
     try {
       const value = await AsyncStorage.getItem('@DidFirstSteps');
 
@@ -59,12 +57,26 @@ export default function Main(props) {
     }
   };
 
+  const _retrieveData = async () => {
+    try {
+      const array1 = await AsyncStorage.getItem('@StoredArray1');
+
+      if (array1 !== null && array1 !== undefined) {
+        setData( JSON.parse(array1) );
+      }
+    } catch (e) {
+      
+    }
+  }
+
   useEffect(() => {
     if(runOnce) {
+      _checkFirstSteps();
       _retrieveData();
       setRunOnce(false);
     }
-  },[]);
+    saveStorageChanges()
+  },[Data]);
 
   function openFirstSteps() {
     return props.navigation.dispatch(
@@ -75,7 +87,24 @@ export default function Main(props) {
       ],}));
   }
 
+  const createTwoButtonAlert = (title,msg,disc) =>
+    Alert.alert(
+      title,
+      msg,
+      [
+        {
+          text: "Cancel",
+          onPress: () => null,
+          style: "cancel"
+        },
+        { text: "SIM", onPress: () => removeDisc(disc) }
+      ],
+      { cancelable: true }
+    );
+
+
   function addDisc() {
+    setIsNew(true);
     inputChange("id",null);
     inputChange("name","");
     inputChange("ch",60);
@@ -85,7 +114,7 @@ export default function Main(props) {
   }
 
   function editDisc(disc) {
-    inputChange("id",disc.id);
+    setIsNew(false);
     inputChange("name",disc.name);
     inputChange("ch",disc.ch);
     inputChange("cf",disc.cf);
@@ -93,19 +122,34 @@ export default function Main(props) {
     setModalAddVisible(true);
   }
 
-  function refreshListWithModification() {
-    // New
-    if (disc.id == null) {
-      let newId = DATA.length
-      let newDisc = disc;
-      newDisc.id = newId;
-      DATA.push(newDisc);
-      console.log("Foi NEW");
-    } else {
-      DATA[disc.id] = disc;
-      console.log("Foi EDIT");
+  function removeDisc(disc) {
+    let newArray = Data.filter(item => item.name.toLowerCase() != disc.name.toLowerCase());
+    setData(newArray);
+  }
+
+  const saveStorageChanges = async () => {
+    console.log("ATUALIZOU");
+    try {
+      const value = await AsyncStorage.setItem('@StoredArray1',JSON.stringify(Data));
+    } catch (error) {
+
     }
-    console.log(DATA);
+  };
+
+  function refreshListWithModification() {
+    // New Disc
+    let newArray = Data;
+    let isNewIndex = newArray.findIndex(item => item.name.toLowerCase() != disc.name.toLowerCase())
+
+    // New Disc
+    if (isNewIndex == -1) {
+      newArray.push(disc);
+      setData(newArray);
+    // Edit Disc
+    } else {
+      newArray[isNewIndex] = disc;
+      setData(newArray);
+    }
     setRefresh(true);
     setModalAddVisible(false);
   }
@@ -127,11 +171,12 @@ export default function Main(props) {
             <Text style={styles.textDisc}>Disciplinas Cadastradas</Text>
             <Divider style={styles.div1} />
             <FlatList
-              data={DATA}
+              data={Data}
               extraData={refresh}
               removeClippedSubviews={false}
               style={styles.scrollView}
               showsVerticalScrollIndicator={true}
+              ListEmptyComponent={<Text style={styles.emptyMsg}>Nenhuma disciplina cadastrada.</Text>}
               renderItem={({ item }) => (
                 <View style={styles.listContainer}>
                   <View style={styles.listItem}>
@@ -145,15 +190,20 @@ export default function Main(props) {
                       <Text style={styles.textDiscCh}>Carga Horaria: {item.ch}h</Text>
                     </View>
                     <View>
-                      <TouchableOpacity style={styles.actionList} onPress={() => editDisc(item)}>
-                        <Icon3 name="options" style={styles.actionlistIcon} size={14}/>
+                      <View style={styles.viewTwoButton}>
+                      <TouchableOpacity style={styles.actionlistIconBtnLeft} onPress={() => editDisc(item)}>
+                        <Icon name="edit" style={styles.actionlistIconEdit} size={16}/>
                       </TouchableOpacity>
+                      <TouchableOpacity style={styles.actionlistIconBtnRight} onPress={() => createTwoButtonAlert("Confirmação",`Deseja remover ${item.name}`,item)}>
+                        <Icon name="delete" style={styles.actionlistIconRemove} size={16}/>
+                      </TouchableOpacity>
+                      </View>
                     </View>
                   </View>
                   <Divider style={styles.div2} />
                 </View>
               )}
-              keyExtractor={item => item.id.toString()}
+              keyExtractor={(item) => item.name}
             />
           </KeyboardAvoidingView>
           <HideWithKeyboard style={styles.containerItemBottom}>
@@ -216,7 +266,7 @@ export default function Main(props) {
           >
         <View style={styles.aboutContainer}>
           <View style={styles.addModalView}>
-          <Text style={styles.addModalTitle}>{ disc.id == null ? "Adicionar" : "Editar" } Disciplina</Text>
+          <Text style={styles.addModalTitle}>{ isNew ? "Adicionar" : "Editar" } Disciplina</Text>
           <Divider style={styles.divModal} />
           <Text style={styles.inputText}>Nome:</Text>
           <TextInput style={styles.input} onChangeText={e => (inputChange("name",e))} placeholder={" Nome ou Sigla da Displina "} value={disc.name} />
@@ -249,7 +299,7 @@ export default function Main(props) {
               <Text style={styles.dialogAddBtnText}>Cancelar</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.dialogAddBtnSaveEdit} onPress={() => refreshListWithModification()}>
-              <Text style={styles.dialogAddBtnText}>{ disc.id == null ? "Cadastrar" : "Modificar" }</Text>
+              <Text style={styles.dialogAddBtnText}>{ isNew ? "Cadastrar" : "Modificar" }</Text>
             </TouchableOpacity>
           </View>
           </View>
@@ -291,8 +341,24 @@ dialogBtnView: {
   justifyContent: 'space-between',
   flexDirection: 'row',
 },
+emptyMsg: {
+  marginTop: 20,
+  textAlign: 'center',
+  fontSize: 16,
+  color: '#004772',
+  fontWeight: 'bold',
+},
 inputText: {
   marginTop: 15,
+},
+viewTwoButton: {
+  flexDirection: 'row',
+},
+actionlistIconRemove: {
+  color: '#003b5e',
+},
+actionlistIconEdit: {
+  color: '#003b5e',
 },
 input: {
   marginTop: 2,
@@ -367,7 +433,6 @@ scrollView: {
 },
 listItem: {
   paddingLeft: 10,
-  paddingRight: 5,
   paddingTop: 10,
   paddingBottom: 10,
   flexDirection: 'row',
@@ -410,6 +475,26 @@ actionList: {
 },
 actionlistIcon: {
   color: '#004772',
+},
+actionlistIconBtnLeft: {
+  borderWidth: 1,
+  borderColor: 'rgba(	0, 71, 114,0.5)',
+  borderRadius: 8,
+  width: 30,
+  height: 30,
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: 5,
+},
+actionlistIconBtnRight: {
+  borderWidth: 1,
+  borderColor: 'rgba(	0, 71, 114,0.5)',
+  borderRadius: 8,
+  width: 30,
+  height: 30,
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginLeft: 5,
 },
 containerItemMid: {
   width: '95%',
