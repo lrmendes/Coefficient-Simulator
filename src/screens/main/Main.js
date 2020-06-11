@@ -75,8 +75,8 @@ export default function Main(props) {
       _retrieveData();
       setRunOnce(false);
     }
-    saveStorageChanges()
-  },[Data]);
+    saveStorageChanges();
+  },[Data.toString()]);
 
   function openFirstSteps() {
     return props.navigation.dispatch(
@@ -127,8 +127,17 @@ export default function Main(props) {
     setData(newArray);
   }
 
+  function fastModify(index, newCf) {
+    /*console.log("Index: ",index," - New: ",newCf);
+    let newArray = Data;
+    newArray[index].cf = newCf;
+    setData(newArray);
+    console.log("\n",Data,"\n",newArray);*/
+  }
+
   const saveStorageChanges = async () => {
-    console.log("ATUALIZOU");
+    //console.log("ATUALIZOU: ", Data);
+    setRefresh(!refresh);
     try {
       const value = await AsyncStorage.setItem('@StoredArray1',JSON.stringify(Data));
     } catch (error) {
@@ -139,18 +148,15 @@ export default function Main(props) {
   function refreshListWithModification() {
     // New Disc
     let newArray = Data;
-    let isNewIndex = newArray.findIndex(item => item.name.toLowerCase() != disc.name.toLowerCase())
-
+    let isNewIndex = newArray.findIndex(item => item.name.toLowerCase() == disc.name.toLowerCase())
     // New Disc
     if (isNewIndex == -1) {
       newArray.push(disc);
-      setData(newArray);
     // Edit Disc
     } else {
       newArray[isNewIndex] = disc;
-      setData(newArray);
     }
-    setRefresh(true);
+    setData(newArray);
     setModalAddVisible(false);
   }
   
@@ -177,12 +183,12 @@ export default function Main(props) {
               style={styles.scrollView}
               showsVerticalScrollIndicator={true}
               ListEmptyComponent={<Text style={styles.emptyMsg}>Nenhuma disciplina cadastrada.</Text>}
-              renderItem={({ item }) => (
+              renderItem={({ item,index }) => (
                 <View style={styles.listContainer}>
                   <View style={styles.listItem}>
                     <View>
                       <View style={styles.boxDiscCoef}>
-                      <TextInput style={styles.discCoef} onChangeText={e => (null)} keyboardType={"numeric"} defaultValue={item.cf.toString()} />
+                        <TextInput style={styles.discCoef} onChangeText={e => item.cf = e} onEndEditing={e => fastModify(index,e.nativeEvent.text)} keyboardType={"numeric"} defaultValue={item.cf.toString()} />
                       </View>
                     </View>
                     <View style={styles.boxDiscMain}>
@@ -269,7 +275,7 @@ export default function Main(props) {
           <Text style={styles.addModalTitle}>{ isNew ? "Adicionar" : "Editar" } Disciplina</Text>
           <Divider style={styles.divModal} />
           <Text style={styles.inputText}>Nome:</Text>
-          <TextInput style={styles.input} onChangeText={e => (inputChange("name",e))} placeholder={" Nome ou Sigla da Displina "} value={disc.name} />
+          <TextInput style={styles.input} editable={isNew}  onChangeText={e => (inputChange("name",e))} placeholder={" Nome ou Sigla da Displina "} value={disc.name} />
           <Text style={styles.inputText}>Carga Horária Total:</Text>
           <View style={styles.input}>
           <Picker
@@ -290,7 +296,7 @@ export default function Main(props) {
           </Picker>
           </View>
           <Text style={styles.inputText}>Nota Estipulada:</Text>
-          <TextInput style={styles.input} onChangeText={e => (inputChange("cf",e))} keyboardType={"numeric"} placeholder={" Nota Estipulada "} value={disc.cf.toString()} />
+          <TextInput style={styles.input} onChangeText={e => (inputChange("cf",e))} keyboardType={"numeric"} placeholder={" Nota Estipulada "} value={disc.cf == 0 ? "" : disc.cf.toString()} />
           <Text style={styles.inputObservation}>
           Entradas Válidas: 0.00 a 10.0.
           </Text>
