@@ -1,6 +1,6 @@
 import React from 'react';
 import { Dimensions } from 'react-native';
-import { Text, View, SafeAreaView, StyleSheet, TouchableOpacity, ScrollView, Image, TextInput, StatusBar } from 'react-native';
+import { Text, View, SafeAreaView, StyleSheet, TouchableOpacity, ScrollView, Image, TextInput, StatusBar, Alert } from 'react-native';
 import { CommonActions } from '@react-navigation/native';
 import AsyncStorage from '@react-native-community/async-storage';
 import Carousel, {Pagination} from 'react-native-snap-carousel';
@@ -28,7 +28,7 @@ export default class App extends React.Component {
                       <TouchableOpacity style={styles.btNext} onPress={() => this.nextStep()}>
                         <Text style={styles.btNextText}>Próximo</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity style={styles.btJump} onPress={() => this.finishSteps(true)}>
+                      <TouchableOpacity style={styles.btJump} onPress={() => this.createTwoButtonAlert("Confirmação","Deseja pular o Tutorial?\nObs: Pule somente se ainda não possuir um coeficiênte base (1º período).", true)}>
                         <Text style={styles.btJumpText}>Pular Tutorial</Text>
                       </TouchableOpacity>
                       </View>
@@ -82,7 +82,7 @@ export default class App extends React.Component {
                       <TextInput style={styles.input} onChangeText={e => (this.setState({chNum : e}), this.setCoef(0,e))} keyboardType={"numeric"} placeholder={" CH"} value={this.chNum} />
                       </ScrollView>,
               footer: <View>
-                      <TouchableOpacity style={styles.btNext} onPress={() => this.finishSteps(false)}>
+                      <TouchableOpacity style={styles.btNext} onPress={() => this.createTwoButtonAlert("Confirmação","Finalizar Tutorial?", false)}>
                         <Text style={styles.btNextText}>Tudo Pronto</Text>
                       </TouchableOpacity>
                       </View>
@@ -102,8 +102,23 @@ export default class App extends React.Component {
         
       }
     }
+
+    createTwoButtonAlert = (title,msg,jumped) =>
+    Alert.alert(
+      title,
+      msg,
+      [
+        {
+          text: "Cancel",
+          onPress: () => null,
+          style: "cancel"
+        },
+        { text: "Confirmar", onPress: () => finishSteps(jumped) }
+      ],
+      { cancelable: true }
+    );
     
-    finishSteps = async (jumped) => {
+    finishSteps = async () => {
       try {
         //console.log("Feito",jumped);
         await AsyncStorage.setItem('@DidFirstSteps', "true");
@@ -123,7 +138,7 @@ export default class App extends React.Component {
 
     nextStep = () => {
       if (this.state.activeIndex === this.state.carouselItems.length -1) {
-        this.finishSteps(false)
+        this.createTwoButtonAlert("Confirmação","Finalizar Tutorial?", false);
       } else {
         this.setState({activeIndex: this.state.activeIndex + 1})
         this.carousel.snapToNext();

@@ -144,11 +144,9 @@ export default function Main(props) {
       msg,
       [
         {
-          text: "Cancel",
-          onPress: () => null,
-          style: "cancel"
+          text: "Cancelar", onPress: () => null,
         },
-        { text: "SIM", onPress: () => removeDisc(disc) }
+        { text: "Confirmar", onPress: () => removeDisc(disc) }
       ],
       { cancelable: true }
     );
