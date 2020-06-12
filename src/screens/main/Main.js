@@ -105,12 +105,14 @@ export default function Main(props) {
   },[JSON.stringify(Data), baseCf]);
 
   function openFirstSteps() {
-    return props.navigation.dispatch(
+    setModalConfigVisible(false);
+    props.navigation.navigate('Steps');
+    /*return props.navigation.dispatch(
       CommonActions.reset({
         index: 0,
         routes: [
           { name: 'Steps' },
-      ],}));
+      ],}));*/
   }
 
   const updateCf = () => {
@@ -299,14 +301,27 @@ export default function Main(props) {
           onRequestClose={() => {setModalConfigVisible(false)}}
           >
         <View style={styles.aboutContainer}>
-          <View style={styles.aboutModalView}>
-          <Text style={styles.textDiscName}>Configurações Básicas do APP.</Text>
+          <View style={styles.addModalView}>
+          <Text style={styles.textModalTitle}>Configurações</Text>
+          <Divider style={styles.divModal} />
+          <Text style={styles.configContainerText}>Coeficiente Base</Text>
+          <Text style={styles.inputText}>Coeficiente de Rendimento (NF * CH)</Text>
+          <TextInput style={styles.input} onChangeText={e => (this.setState({crNum : e}), this.setCoef(e,0))} keyboardType={"numeric"} placeholder={" NF*CH"} value={baseCf.nf.toString()} />
+          <Text style={styles.inputText}>Carga Horária Total (CH)</Text>
+          <TextInput style={styles.input} onChangeText={e => (this.setState({chNum : e}), this.setCoef(0,e))} keyboardType={"numeric"} placeholder={" CH"} value={baseCf.ch.toString()} />
+          <View style={styles.dialogBtnViewCenter}>
+            <Text style={styles.inputText}>Onde encontrar esses valores? </Text>
+            <TouchableOpacity style={styles.dialogBtn} onPress={() => openFirstSteps()}>
+              <Text style={styles.dialogBtnText}>Visualizar Tutorial</Text>
+            </TouchableOpacity>
+          </View>
+          <Divider style={styles.divModal} />
           <View style={styles.dialogBtnView}>
-          <TouchableOpacity style={styles.dialogBtn} onPress={() => openFirstSteps()}>
-            <Text style={styles.textCoef}>Ver Tutorial</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.dialogBtn} onPress={() => setModalConfigVisible(false)}>
+          <TouchableOpacity style={styles.dialogAddBtnCancel} onPress={() => setModalConfigVisible(false)}>
             <Text style={styles.textCoef}>Fechar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.dialogAddBtnSaveEdit} onPress={() => refreshListWithModification()}>
+            <Text style={styles.dialogAddBtnText}>Salvar</Text>
           </TouchableOpacity>
           </View>
           </View>
@@ -390,11 +405,36 @@ dialogAddBtnSaveEdit: {
   alignItems: 'center',
   width: '45%',
 },
+configContainerText: {
+  textAlign: 'center',
+  marginTop: 10,
+  fontWeight: 'bold',
+  color: '#000000',
+  fontSize: 14,
+},
 dialogBtnView: {
   marginTop: 20,
   width: '95%',
   justifyContent: 'space-between',
   flexDirection: 'row',
+},
+dialogBtnViewCenter: {
+  width: '95%',
+  flexDirection: 'column',
+  alignItems: 'center',
+},
+dialogBtnText: {
+  fontSize: 14,
+  color: '#004772',
+},
+dialogBtn: {
+  justifyContent: 'space-between',
+  marginTop: 5,
+  padding: 5,
+  borderWidth: 1,
+  borderColor: 'rgba(0, 71, 114,0.8)',
+  borderRadius: 5,
+  alignItems: 'center',
 },
 emptyMsg: {
   marginTop: 20,
@@ -600,6 +640,12 @@ textDiscName: {
   color: '#004772',
   fontWeight: 'bold',
   //textAlign: 'center'
+},
+textModalTitle: {
+  fontSize: 20,
+  color: '#004772',
+  fontWeight: 'bold',
+  textAlign: 'center'
 },
 addModalTitle: {
   fontSize: 20,
