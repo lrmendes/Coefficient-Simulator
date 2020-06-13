@@ -10,6 +10,7 @@ const { width: viewportWidth, height: viewportHeight } = Dimensions.get('window'
 export default class App extends React.Component {
     constructor(props) {
         super(props);
+
         this.state = { 
           activeIndex:0,
           crNum: 0,
@@ -28,7 +29,7 @@ export default class App extends React.Component {
                       <TouchableOpacity style={styles.btNext} onPress={() => this.nextStep()}>
                         <Text style={styles.btNextText}>Próximo</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity style={styles.btJump} onPress={() => this.createTwoButtonAlert("Confirmação","Deseja pular o Tutorial?\nObs: Pule somente se ainda não possuir um coeficiênte base (1º período).", true)}>
+                      <TouchableOpacity style={styles.btJump} onPress={() => this.createAlertJumpSteps("Confirmação","Deseja pular o Tutorial?\nObs: Pule somente se ainda não possuir um coeficiênte base (1º período).", true)}>
                         <Text style={styles.btJumpText}>Pular Tutorial</Text>
                       </TouchableOpacity>
                       </View>
@@ -77,19 +78,37 @@ export default class App extends React.Component {
                       <Text style={styles.title1}>Passo 4</Text>
                       <Text style={styles.text1}>Insira nos campos indicados os valores exatos encontrados no passo anterior.</Text>
                       <Text style={styles.inputText}>Coeficiente de Rendimento (NF * CH)</Text>
-                      <TextInput style={styles.input} onChangeText={e => (this.setState({crNum : e}), this.setCoef(e,0))} keyboardType={"numeric"} placeholder={" NF*CH"} value={this.crNum} />
+                      <TextInput style={styles.input} onChangeText={e => (this.setState({crNum : e}), this.setCoef(e,0))} keyboardType={"numeric"} placeholder={" NF*CH"} defaultValue={""} />
                       <Text style={styles.inputText}>Carga Horária Total (CH)</Text>
-                      <TextInput style={styles.input} onChangeText={e => (this.setState({chNum : e}), this.setCoef(0,e))} keyboardType={"numeric"} placeholder={" CH"} value={this.chNum} />
+                      <TextInput style={styles.input} onChangeText={e => (this.setState({chNum : e}), this.setCoef(0,e))} keyboardType={"numeric"} placeholder={" CH"} defaultValue={""}  />
                       </ScrollView>,
               footer: <View>
-                      <TouchableOpacity style={styles.btNext} onPress={() => this.createTwoButtonAlert("Confirmação","Finalizar Tutorial?", false)}>
+                      <TouchableOpacity style={styles.btNext} onPress={() => this.isCoefValid()}>
                         <Text style={styles.btNextText}>Tudo Pronto</Text>
                       </TouchableOpacity>
                       </View>
             },
         ],
       },
+      this.loadCoef();
       this._renderItem = this._renderItem.bind(this);
+
+      this.getChNum = () => {
+        if (this.state.chNum == 0 || this.state.chNum == null ) {
+          return "-+-";
+        } else {
+          return this.state.chNum.toString();
+        }
+      }
+  
+      this.getCrNum = () => {
+        if (this.state.crNum == 0 || this.state.crNum == null ) {
+          return "+-+";
+        } else {
+          return this.state.crNum.toString();
+        }
+      }
+
     }
 
     setCoef = (cr,cd) => {
@@ -103,28 +122,56 @@ export default class App extends React.Component {
       }
     }
 
-    createTwoButtonAlert = (title,msg,jumped) =>
+    loadCoef = async() => {
+      const ch = await AsyncStorage.getItem('@baseCh');
+      const nf = await AsyncStorage.getItem('@baseNf');
+      const cf = await AsyncStorage.getItem('@baseCf');
+
+      if (ch != null) {
+        this.setState({chNum: ch})
+      }
+      if (nf != null) {
+        this.setState({crNum: nf})
+      }
+      if (cf != null) {
+        this.setState({coef: cf})
+      }
+    }
+
+    createAlertJumpSteps = (title,msg,jumped) =>
     Alert.alert(
       title,
       msg,
       [
         {
-          text: "Cancel",
-          onPress: () => null,
-          style: "cancel"
+          text: "Cancelar", onPress: () => null,
         },
-        { text: "Confirmar", onPress: () => finishSteps(jumped) }
+        { text: "Confirmar", onPress: () => this.finishSteps(jumped) }
+      ],
+      { cancelable: true }
+    );
+
+    createAlertMsg = (title,msg,jumped) =>
+    Alert.alert(
+      title,
+      msg,
+      [
+        {
+          text: "Cancelar", onPress: () => null,
+        },
+        { text: "Confirmar", onPress: () => this.finishSteps(jumped) }
       ],
       { cancelable: true }
     );
     
-    finishSteps = async () => {
+    finishSteps = async (jumped) => {
       try {
-        //console.log("Feito",jumped);
-        await AsyncStorage.setItem('@DidFirstSteps', "true");
-        await AsyncStorage.setItem('@baseNf', this.state.crNum.toString());
-        await AsyncStorage.setItem('@baseCh', this.state.chNum.toString());
-        await AsyncStorage.setItem('@baseCf', this.state.coef.toString());
+        if(!jumped) {
+          await AsyncStorage.setItem('@DidFirstSteps', "true");
+          await AsyncStorage.setItem('@baseNf', this.state.crNum.toString());
+          await AsyncStorage.setItem('@baseCh', this.state.chNum.toString());
+          await AsyncStorage.setItem('@baseCf', this.state.coef.toString());
+        }
         return this.props.navigation.dispatch(
           CommonActions.reset({
             index: 0,
@@ -136,9 +183,23 @@ export default class App extends React.Component {
       }
     }
 
+    isCoefValid = async() => {
+      if (this.state.coef == 0 || this.state.coef == null) {
+        return this.createAlertMsg("Confirmação","O coeficiente base não foi corretamente definido.\nDeseja finalizar o tutorial?", false);
+      }
+      const cf = await AsyncStorage.getItem('@baseCf');
+      if (cf == null || cf == undefined || cf == 0) {
+        return this.createAlertMsg("Confirmação","Finalizar Tutorial?", false);
+      } else if (this.state.coef != cf) {
+        return this.createAlertMsg("Confirmação","Salvar novo coeficiente base?", false);
+      } else {
+        return this.finishSteps(false);
+      }
+    }
+
     nextStep = () => {
       if (this.state.activeIndex === this.state.carouselItems.length -1) {
-        this.createTwoButtonAlert("Confirmação","Finalizar Tutorial?", false);
+        this.isCoefValid();
       } else {
         this.setState({activeIndex: this.state.activeIndex + 1})
         this.carousel.snapToNext();
@@ -186,7 +247,10 @@ export default class App extends React.Component {
       );
   }
 
+  
+
   render () {
+      
       return (
         <SafeAreaView style={{flex: 1, backgroundColor:'#5DB075', paddingTop: 15, }}>
           <View style={{ flex: 1, flexDirection:'column', justifyContent: 'center', }}>
