@@ -20,6 +20,7 @@ export default function Main(props) {
   const[baseCf,setBaseCf] = useState({
     ch: 0.0,
     nf: 0.0,
+    cf: 0.0,
   });
 
   const[simulatedCf,setSimulatedCf] = useState(0);
@@ -36,6 +37,12 @@ export default function Main(props) {
   const [disc,setDisc] = useState({
     name: '',
     ch: 60,
+    cf: 0.0,
+  });
+
+  const [baseCfModified,setBaseCfModified] = useState({
+    ch: 0.0,
+    nf: 0.0,
     cf: 0.0,
   });
 
@@ -86,6 +93,7 @@ export default function Main(props) {
         return;
       }
       setBaseCf({ch: parseFloat(ch), nf: parseFloat(nf), cf: parseFloat(cf)});
+      setBaseCfModified({ch: parseFloat(ch), nf: parseFloat(nf), cf: parseFloat(cf)});
     } catch (e) {
       
     }
@@ -140,6 +148,34 @@ export default function Main(props) {
     }
   }
 
+  const saveModifiedBaseCoef = async() => {
+    try {
+      if (  parseFloat(baseCfModified.nf) == 0 || parseFloat(baseCfModified.ch) == 0) {
+        setBaseCfModified({ch: parseFloat(baseCf.ch), nf: parseFloat(baseCf.nf), cf: parseFloat(baseCf.cf)});
+        createAlertOnly("Confirmação","Deseja zerar o coeficiente base?");
+        return console.log("Deseja zerar o coeficiente base?");
+      }
+
+      let calc = (baseCfModified.nf) / ( (baseCfModified.ch) * 10)
+      let power = Math.pow(10, 4 || 0)
+      calc = (Math.round(calc * power) / power);
+      if (calc != null && calc != undefined && calc != Infinity && !isNaN(calc)) {
+        //setBaseCfModified(state => ({...state, cf: calc}));
+        await AsyncStorage.setItem('@baseNf', baseCfModified.nf.toString());
+        await AsyncStorage.setItem('@baseCh', baseCfModified.ch.toString());
+        await AsyncStorage.setItem('@baseCf', baseCfModified.cf.toString());
+        setBaseCf({ch: parseFloat(baseCfModified.ch), nf: parseFloat(baseCfModified.nf), cf: calc});
+      } else {
+        setBaseCfModified({ch: parseFloat(baseCf.ch), nf: parseFloat(baseCf.nf), cf: parseFloat(baseCf.cf)});
+        createAlertOnly("ERRO","Não foi possível salvar:\nCoeficiente Base Inválido!");
+      }
+    } catch(e) {
+      setBaseCfModified({ch: parseFloat(baseCf.ch), nf: parseFloat(baseCf.nf), cf: parseFloat(baseCf.cf)});
+      createAlertOnly("ERRO","Não foi possível salvar:\nCoeficiente Base Inválido!");
+    }
+    setModalConfigVisible(false);
+  }
+
   const createTwoButtonAlert = (title,msg,disc) =>
     Alert.alert(
       title,
@@ -149,6 +185,18 @@ export default function Main(props) {
           text: "Cancelar", onPress: () => null,
         },
         { text: "Confirmar", onPress: () => removeDisc(disc) }
+      ],
+      { cancelable: true }
+    );
+
+    const createAlertOnly = (title,msg) =>
+    Alert.alert(
+      title,
+      msg,
+      [
+        {
+          text: "OK", onPress: () => null,
+        },
       ],
       { cancelable: true }
     );
@@ -306,9 +354,9 @@ export default function Main(props) {
           <Divider style={styles.divModal} />
           <Text style={styles.configContainerText}>Coeficiente Base</Text>
           <Text style={styles.inputText}>Coeficiente de Rendimento (NF * CH)</Text>
-          <TextInput style={styles.input} onChangeText={e => (this.setState({crNum : e}), this.setCoef(e,0))} keyboardType={"numeric"} placeholder={" NF*CH"} value={baseCf.nf.toString()} />
+          <TextInput style={styles.input} onChangeText={e => setBaseCfModified(state => ({...state, nf: e}))} keyboardType={"numeric"} placeholder={" NF*CH"} defaultValue={baseCf.nf.toString()} />
           <Text style={styles.inputText}>Carga Horária Total (CH)</Text>
-          <TextInput style={styles.input} onChangeText={e => (this.setState({chNum : e}), this.setCoef(0,e))} keyboardType={"numeric"} placeholder={" CH"} value={baseCf.ch.toString()} />
+          <TextInput style={styles.input} onChangeText={e => setBaseCfModified(state => ({...state, ch: e}))} keyboardType={"numeric"} placeholder={" CH"} defaultValue={baseCf.ch.toString()} />
           <View style={styles.dialogBtnViewCenter}>
             <Text style={styles.inputText}>Onde encontrar esses valores? </Text>
             <TouchableOpacity style={styles.dialogBtn} onPress={() => openFirstSteps()}>
@@ -320,7 +368,7 @@ export default function Main(props) {
           <TouchableOpacity style={styles.dialogAddBtnCancel} onPress={() => setModalConfigVisible(false)}>
             <Text style={styles.textCoef}>Fechar</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.dialogAddBtnSaveEdit} onPress={() => refreshListWithModification()}>
+          <TouchableOpacity style={styles.dialogAddBtnSaveEdit} onPress={() => saveModifiedBaseCoef()}>
             <Text style={styles.dialogAddBtnText}>Salvar</Text>
           </TouchableOpacity>
           </View>
